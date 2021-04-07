@@ -212,7 +212,7 @@ print(abs_image_path)
 hashed_captcha = bcrypt.hashpw(captcha, bcrypt.gensalt())
 
 img_captcha = ImgCaptcha(
-        captcha_text=captcha.decode(),
+        captcha_text=hashed_captcha.decode(),
         image_url=abs_image_path,
         style="mass captcha",
         created_date=created_date,

@@ -1,4 +1,5 @@
 import sys
+import bcrypt
 import requests
 import simplejson
 from rest_framework_mongoengine import viewsets
@@ -92,17 +93,19 @@ def check_response(request):
     if request.method == "POST":
         data = json.loads(request.body)
         response = data['response']
-        print(response)
+        # print(response)
 
         id_image = data['remote_image_id']
         image = ImgCaptcha.objects(id=id_image)
         serializer = CaptchaImageSerializer(image, many=True)
         image_dict = json.loads(json.dumps(serializer.data))[0]
-        print(image_dict['captcha_text'])
+        # print(image_dict['captcha_text'])
 
-        if image_dict['captcha_text'] == response:
+        if bcrypt.checkpw(response.encode(), image_dict['captcha_text'].encode()):
             result = 'Success'
         else:
             result = 'Fail'
+
         print(result)
-        return JsonResponse({'data': result})
+        return JsonResponse({'result': result})
+
