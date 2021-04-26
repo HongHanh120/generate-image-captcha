@@ -1,6 +1,7 @@
 import sys
 import bcrypt
 import requests
+import random
 import simplejson
 from rest_framework_mongoengine import viewsets
 from django.http import HttpResponse, JsonResponse
@@ -12,6 +13,14 @@ from subprocess import run, PIPE
 
 from .models import *
 from scripts.generate_mass_captcha import *
+from scripts.generate_split_captcha import *
+from scripts.generate_noisy_curves_noisy_shapes_captcha import *
+
+scripts = [
+    '//home//hanh//Desktop//generate//generate_captcha//scripts//generate_mass_captcha.py',
+    '//home//hanh//Desktop//generate//generate_captcha//scripts//generate_split_captcha.py',
+    '//home//hanh//Desktop//generate//generate_captcha//scripts//generate_noisy_curves_noisy_shapes_captcha.py',
+]
 
 
 # Create your views here.
@@ -65,7 +74,7 @@ def captcha_image_detail(request, pk):
 
 def generate_image_captcha(request):
     out = run([sys.executable,
-               '//home//hanh//Desktop//generate//generate_captcha//scripts//generate_mass_captcha.py'],
+               random.choice(scripts)] + list(sys.argv),
               shell=False,
               stdout=PIPE)
 
@@ -89,7 +98,7 @@ def generate_image_captcha(request):
         return JsonResponse({'data': {}}, safe=False)
 
 
-def check_response(request):
+def check_answer(request):
     if request.method == "POST":
         data = json.loads(request.body)
         response = data['response']
@@ -108,4 +117,3 @@ def check_response(request):
 
         print(result)
         return JsonResponse({'result': result})
-

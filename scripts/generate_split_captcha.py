@@ -1,21 +1,23 @@
 import os
 import random
 import string
+import bcrypt
 from PIL import Image, ImageFilter
 from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
 from io import BytesIO
 from datetime import datetime
+from captchaimages.models import ImgCaptcha
 
-# from db.models import ImgCaptcha
+import django
+os.environ["DJANGO_SETTINGS_MODULE"] = "generate_captcha.settings"
+django.setup()
 
-DATA_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
-DEFAULT_FONTS = [os.path.join(DATA_DIR, 'DroidSansMono.ttf')]
+DIR = '/home/hanh/Desktop/generate/generate_captcha/'
+DATA_DIR = os.path.join(DIR, 'data')
+IMAGE_DIR = os.path.join(DIR, 'images')
+DEFAULT_FONTS = os.path.join(DATA_DIR, 'DroidSansMono.ttf')
 FONT_SIZE = 70
-
-table = []
-for i in range(256):
-    table.append(i)
 
 
 class Captcha(object):
@@ -32,7 +34,7 @@ class Captcha(object):
 
 
 class ImageCaptcha(Captcha):
-    def __init__(self, width=270, height=90, fonts=None, font_sizes=None):
+    def __init__(self, width=270, height=100, fonts=None, font_sizes=None):
         self._width = width
         self._height = height
         self._fonts = fonts or DEFAULT_FONTS
@@ -50,9 +52,9 @@ class ImageCaptcha(Captcha):
         return self._truefonts
 
     @staticmethod
-    def draw_grid(image, line_width=4):
+    def draw_grid(image, background, line_width=4):
         w, h = image.size
-        line_color = (255, 255, 255)
+        line_color = background
 
         # draw grid
         x_start = 0
@@ -75,48 +77,37 @@ class ImageCaptcha(Captcha):
 
         return image
 
-    def create_captcha_image(self, chars, color, background):
+    def create_captcha_image(self, chars, background):
         image = Image.new('RGBA', (self._width, self._height), background)
         draw = Draw(image)
 
         def draw_character(c):
             font = random.choice(self.truefonts)
             w, h = draw.textsize(c, font=font)
+            color = random_color(10, 200, random.randint(220, 225))
 
             dx = 0
             dy = 0
 
-            # outline_color = (128, 128, 128)
-            # border_width = 2
+            outline_color = random_color(10, 200, random.randint(220, 225))
+            border_width = 2
 
-            im = Image.new('RGBA', (w, h))
+            im = Image.new('RGBA', (w + border_width, h + border_width))
 
-            # Draw(im).text((dx - border_width, dy), c, font=font, fill=outline_color)
-            # Draw(im).text((dx, dy - border_width), c, font=font, fill=outline_color)
-            # Draw(im).text((dx + border_width, dy), c, font=font, fill=outline_color)
-            # Draw(im).text((dx, dy + border_width), c, font=font, fill=outline_color)
-            #
-            # Draw(im).text((dx + border_width, dy - border_width), c, font=font, fill=outline_color)
-            # Draw(im).text((dx - border_width, dy - border_width), c, font=font, fill=outline_color)
-            # Draw(im).text((dx - border_width, dy + border_width), c, font=font, fill=outline_color)
-            # Draw(im).text((dx + border_width, dy + border_width), c, font=font, fill=outline_color)
+            Draw(im).text((dx - border_width, dy), c, font=font, fill=outline_color)
+            Draw(im).text((dx, dy - border_width), c, font=font, fill=outline_color)
+            Draw(im).text((dx + border_width, dy), c, font=font, fill=outline_color)
+            Draw(im).text((dx, dy + border_width), c, font=font, fill=outline_color)
+
+            Draw(im).text((dx + border_width, dy - border_width), c, font=font, fill=outline_color)
+            Draw(im).text((dx - border_width, dy - border_width), c, font=font, fill=outline_color)
+            Draw(im).text((dx - border_width, dy + border_width), c, font=font, fill=outline_color)
+            Draw(im).text((dx + border_width, dy + border_width), c, font=font, fill=outline_color)
 
             Draw(im).text((dx, dy), c, font=font, fill=color)
 
             im = im.rotate(random.uniform(-30, 30), Image.BILINEAR, expand=1)
             im = im.crop(im.getbbox())
-
-            # remove transparency 1
-            # datas = im.getdata()
-            #
-            # newData = []
-            # for item in datas:
-            #     if item[0] == color[0] and item[1] == color[1] and item[2] == color[2]:
-            #         newData.append(item)
-            #     else:
-            #         newData.append(background)
-            #
-            # im.putdata(newData)
 
             # remove transparency 2
             alpha = im.convert('RGBA').split()[-1]
@@ -152,27 +143,30 @@ class ImageCaptcha(Captcha):
         average = int(text_width / len(chars))
         offset = int(average * 0.1) + 5
 
-        # count = 0
         for im in images:
             w, h = im.size
-            # mask = im.convert('L').point(table)
-            # mask_im_blur = mask.filter(ImageFilter.GaussianBlur(5))
-            # im.save("mask_" + str(count) + '.png', format='png')
             image.paste(im, (offset, int((self._height - h) / 2)), mask=None)
             offset += w
-            # count += 1
 
         if width > self._width:
             image = image.resize((self._width, self._height))
         return image
 
     def generate_image(self, chars):
-        background = (212, 212, 212)
-        text_color = (0, 0, 0)
-        im = self.create_captcha_image(chars, text_color, background)
-        self.draw_grid(im)
+        background = random_color(238, 255)
+        im = self.create_captcha_image(chars, background)
+        self.draw_grid(im, background)
         im = im.filter(ImageFilter.SMOOTH)
         return im
+
+
+def random_color(start, end, opacity=None):
+    red = random.randint(start, end)
+    green = random.randint(start, end)
+    blue = random.randint(start, end)
+    if opacity is None:
+        return red, green, blue
+    return red, green, blue, opacity
 
 
 def random_string():
@@ -180,22 +174,23 @@ def random_string():
     return ''.join(random_letter)
 
 
-captcha = random_string()
-print(captcha)
+captcha = random_string().encode()
+# print(captcha)
 
-img = ImageCaptcha(fonts=['/home/hanh/Desktop/captcha/data/fonts/DroidSansMono.ttf'])
+img = ImageCaptcha(fonts=[DEFAULT_FONTS])
 
 created_date = datetime.now().strftime("%c")
 converted_date = int(datetime.strptime(created_date, "%c").timestamp())
 image_name = "split_captcha_" + str(converted_date) + ".png"
-image_dir = '/home/hanh/Desktop/captcha/images/split'
-abs_image_path = os.path.join(image_dir, image_name)
+abs_image_path = os.path.join(IMAGE_DIR, os.path.join('split', image_name))
 print(abs_image_path)
-img.write(captcha, abs_image_path)
+hashed_captcha = bcrypt.hashpw(captcha, bcrypt.gensalt())
 
-# img_captcha = ImgCaptcha(
-#     captcha_text=captcha,
-#     url_image=abs_image_path,
-#     style_captcha="split_captcha",
-#     created_date=created_date,
-# ).save()
+img_captcha = ImgCaptcha(
+    captcha_text=hashed_captcha.decode(),
+    image_url=abs_image_path,
+    style="split captcha",
+    created_date=created_date,
+).save()
+
+img.write(captcha.decode(), abs_image_path)

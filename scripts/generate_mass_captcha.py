@@ -7,7 +7,6 @@ from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
 from io import BytesIO
 from datetime import datetime
-from generate_captcha import settings
 
 import django
 os.environ["DJANGO_SETTINGS_MODULE"] = 'generate_captcha.settings'
@@ -21,6 +20,7 @@ IMAGE_DIR = os.path.join(DIR, 'images')
 DEFAULT_FONTS = os.path.join(DATA_DIR, 'DroidSansMono.ttf')
 FONT_SIZE = 70
 
+# Using for mask
 table = []
 for i in range(256):
     table.append(i)
@@ -40,6 +40,8 @@ class Captcha(object):
 
 
 class ImageCaptcha(Captcha):
+    """Anh CAPTCHA"""
+
     def __init__(self, width=270, height=100, fonts=None, font_sizes=None):
         self._width = width
         self._height = height
@@ -55,7 +57,6 @@ class ImageCaptcha(Captcha):
             truetype(n, FONT_SIZE)
             for n in self._fonts
         ])
-        # self._truefonts = [(DEFAULT_FONTS, FONT_SIZE)]
         return self._truefonts
 
     @staticmethod
@@ -132,7 +133,7 @@ class ImageCaptcha(Captcha):
             im = im.crop(im.getbbox())
 
             alpha = im.convert('RGBA').split()[-1]
-            bg = Image.new('RGBA', im.size, background + (255,))
+            bg = Image.new('RGBA', im.size, background + (255,))  # them Alpha = mau background cho ảnh bg
             self.create_noise_chars_using_mask(bg, random.choice(chars), 1)
             bg.paste(im, mask=alpha)
 
@@ -177,7 +178,6 @@ class ImageCaptcha(Captcha):
 
     def generate_image(self, chars):
         background = random_color(238, 255)
-        # text_color = (0, 0, 0)
         im = self.create_captcha_image(chars, background)
         for c in chars:
             self.create_noise_chars_using_mask(im, c, 1)
@@ -212,13 +212,10 @@ print(abs_image_path)
 hashed_captcha = bcrypt.hashpw(captcha, bcrypt.gensalt())
 
 img_captcha = ImgCaptcha(
-        captcha_text=hashed_captcha.decode(),
-        image_url=abs_image_path,
-        style="mass captcha",
-        created_date=created_date,
-    ).save()
+    captcha_text=hashed_captcha.decode(),
+    image_url=abs_image_path,
+    style="mass captcha",
+    created_date=created_date,
+).save()
 
 img.write(captcha.decode(), abs_image_path)
-
-
-

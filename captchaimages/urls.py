@@ -11,6 +11,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('captcha/', views.captcha_image_list),
     path('captcha/<str:pk>/', views.captcha_image_detail),
-    path('data/', views.generate_image_captcha),
-    path('check/', csrf_exempt(views.check_response))
+    path('generate-image/', views.generate_image_captcha),
+    path('check-answer/', csrf_exempt(views.check_answer))
 ]
