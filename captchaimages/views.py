@@ -1,3 +1,4 @@
+import os
 import sys
 import bcrypt
 import requests
@@ -16,7 +17,8 @@ from scripts.generate_mass_captcha import *
 from scripts.generate_split_captcha import *
 from scripts.generate_noisy_curves_noisy_shapes_captcha import *
 
-scripts = [
+
+SCRIPTS = [
     '//home//hanh//Desktop//generate//generate_captcha//scripts//generate_mass_captcha.py',
     '//home//hanh//Desktop//generate//generate_captcha//scripts//generate_split_captcha.py',
     '//home//hanh//Desktop//generate//generate_captcha//scripts//generate_noisy_curves_noisy_shapes_captcha.py',
@@ -74,7 +76,7 @@ def captcha_image_detail(request, pk):
 
 def generate_image_captcha(request):
     out = run([sys.executable,
-               random.choice(scripts)] + list(sys.argv),
+               random.choice(SCRIPTS)] + list(sys.argv),
               shell=False,
               stdout=PIPE)
 

@@ -2,7 +2,6 @@ import os
 import sys
 import math
 import random
-import getopt
 import string
 import bcrypt
 import aggdraw
@@ -22,24 +21,16 @@ from captchaimages.models import ImgCaptcha
 
 DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
+FONTS = os.listdir(DATA_DIR)
 IMAGE_DIR = os.path.join(DIR, 'images')
-DEFAULT_FONTS = os.path.join(DATA_DIR, 'DroidSansMono.ttf')
-FONT_SIZE = 70
+FONT_SIZE = [56, 64, 72]
+
+DEFAULT_FONTS = []
+for font in FONTS:
+    DEFAULT_FONTS.append(os.path.join(DATA_DIR, font))
 
 
 class Captcha(object):
-    def generate(self, chars, format='png'):
-        """generate an images captcha of given characters"""
-        """chars: text to be generated
-            format: images file format"""
-        im = self.generate_image(chars)
-        """create BytesIO like file object"""
-        out = BytesIO()
-        im.save(out, format=format)
-        """return back to the start"""
-        out.seek(0)
-        return out
-
     def write(self, chars, output, format='png'):
         im = self.generate_image(chars)
         return im.save(output, format=format)
@@ -47,12 +38,11 @@ class Captcha(object):
 
 class ImageCaptcha(Captcha):
     """ create an images captcha """
-
     def __init__(self, width=270, height=100, fonts=None, font_sizes=None):
         self._width = width
         self._height = height
         self._fonts = fonts or DEFAULT_FONTS
-        self._font_sizes = font_sizes or FONT_SIZE
+        self._font_sizes = font_sizes or random.choice(FONT_SIZE)
         self._truefonts = []
 
     @property
@@ -60,7 +50,7 @@ class ImageCaptcha(Captcha):
         if self._truefonts:
             return self._truefonts
         self._truefonts = tuple([
-            truetype(n, FONT_SIZE)
+            truetype(n, random.choice(FONT_SIZE))
             for n in self._fonts
         ])
         """truetype returns a font object"""
@@ -276,7 +266,7 @@ def random_string():
 
 captcha = random_string().encode()
 
-img = ImageCaptcha(fonts=[DEFAULT_FONTS])
+img = ImageCaptcha(fonts=[random.choice(DEFAULT_FONTS)])
 
 created_date = datetime.now().strftime("%c")
 converted_date = int(datetime.strptime(created_date, "%c").timestamp())

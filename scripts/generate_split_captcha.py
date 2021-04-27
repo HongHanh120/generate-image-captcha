@@ -15,19 +15,16 @@ django.setup()
 
 DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
+FONTS = os.listdir(DATA_DIR)
 IMAGE_DIR = os.path.join(DIR, 'images')
-DEFAULT_FONTS = os.path.join(DATA_DIR, 'DroidSansMono.ttf')
-FONT_SIZE = 70
+FONT_SIZE = [56, 64, 72]
+
+DEFAULT_FONTS = []
+for font in FONTS:
+    DEFAULT_FONTS.append(os.path.join(DATA_DIR, font))
 
 
 class Captcha(object):
-    def generate(self, chars, format='png'):
-        im = self.generate_image(chars)
-        out = BytesIO()
-        im.save(out, format=format)
-        out.seek(0)
-        return out
-
     def write(self, chars, output, format='png'):
         im = self.generate_image(chars)
         return im.save(output, format=format)
@@ -38,7 +35,7 @@ class ImageCaptcha(Captcha):
         self._width = width
         self._height = height
         self._fonts = fonts or DEFAULT_FONTS
-        self._font_sizes = font_sizes or FONT_SIZE
+        self._font_sizes = font_sizes or random.choice(FONT_SIZE)
         self._truefonts = []
 
     @property
@@ -46,7 +43,7 @@ class ImageCaptcha(Captcha):
         if self._truefonts:
             return self._truefonts
         self._truefonts = tuple([
-            truetype(n, FONT_SIZE)
+            truetype(n, random.choice(FONT_SIZE))
             for n in self._fonts
         ])
         return self._truefonts
@@ -177,7 +174,7 @@ def random_string():
 captcha = random_string().encode()
 # print(captcha)
 
-img = ImageCaptcha(fonts=[DEFAULT_FONTS])
+img = ImageCaptcha(fonts=[random.choice(DEFAULT_FONTS)])
 
 created_date = datetime.now().strftime("%c")
 converted_date = int(datetime.strptime(created_date, "%c").timestamp())
