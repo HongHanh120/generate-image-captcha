@@ -17,7 +17,7 @@ DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
 FONTS = os.listdir(DATA_DIR)
 IMAGE_DIR = os.path.join(DIR, 'images')
-FONT_SIZE = [56, 64, 72]
+FONT_SIZE = [64, 72]
 
 DEFAULT_FONTS = []
 for font in FONTS:
@@ -35,7 +35,7 @@ class ImageCaptcha(Captcha):
         self._width = width
         self._height = height
         self._fonts = fonts or DEFAULT_FONTS
-        self._font_sizes = font_sizes or random.choice(FONT_SIZE)
+        self._font_sizes = font_sizes or FONT_SIZE
         self._truefonts = []
 
     @property
@@ -83,30 +83,30 @@ class ImageCaptcha(Captcha):
             w, h = draw.textsize(c, font=font)
             color = random_color(10, 200, random.randint(220, 225))
 
-            dx = 0
-            dy = 0
+            x = 0
+            y = 0
 
             outline_color = random_color(10, 200, random.randint(220, 225))
             border_width = 2
 
             im = Image.new('RGBA', (w + border_width, h + border_width))
 
-            Draw(im).text((dx - border_width, dy), c, font=font, fill=outline_color)
-            Draw(im).text((dx, dy - border_width), c, font=font, fill=outline_color)
-            Draw(im).text((dx + border_width, dy), c, font=font, fill=outline_color)
-            Draw(im).text((dx, dy + border_width), c, font=font, fill=outline_color)
+            Draw(im).text((x - border_width, y), c, font=font, fill=outline_color)
+            Draw(im).text((x, y - border_width), c, font=font, fill=outline_color)
+            Draw(im).text((x + border_width, y), c, font=font, fill=outline_color)
+            Draw(im).text((x, y + border_width), c, font=font, fill=outline_color)
 
-            Draw(im).text((dx + border_width, dy - border_width), c, font=font, fill=outline_color)
-            Draw(im).text((dx - border_width, dy - border_width), c, font=font, fill=outline_color)
-            Draw(im).text((dx - border_width, dy + border_width), c, font=font, fill=outline_color)
-            Draw(im).text((dx + border_width, dy + border_width), c, font=font, fill=outline_color)
+            Draw(im).text((x + border_width, y - border_width), c, font=font, fill=outline_color)
+            Draw(im).text((x - border_width, y - border_width), c, font=font, fill=outline_color)
+            Draw(im).text((x - border_width, y + border_width), c, font=font, fill=outline_color)
+            Draw(im).text((x + border_width, y + border_width), c, font=font, fill=outline_color)
 
-            Draw(im).text((dx, dy), c, font=font, fill=color)
+            Draw(im).text((x, y), c, font=font, fill=color)
 
             im = im.rotate(random.uniform(-30, 30), Image.BILINEAR, expand=1)
             im = im.crop(im.getbbox())
 
-            # remove transparency 2
+            # remove transparency
             alpha = im.convert('RGBA').split()[-1]
             bg = Image.new('RGBA', im.size, background + (255,))
             bg.paste(im, mask=alpha)
@@ -115,17 +115,15 @@ class ImageCaptcha(Captcha):
             im = bg
 
             # wrap
-            x = int(dx)
-            y = int(dy)
-            w2 = w + abs(x)
-            h2 = h + abs(y)
+            # w2 = w + abs(x)
+            # h2 = h + abs(y)
 
             data = (x, y,
-                    -x, h2 - y,
-                    w2 + x, h2 + y,
-                    w2 - x, -y)
+                    -x, h - y,
+                    w + x, h + y,
+                    w - x, -y)
 
-            im = im.resize((w2, h2))
+            im = im.resize((w, h))
             im = im.transform((w, h), Image.QUAD, data)
             return im
 

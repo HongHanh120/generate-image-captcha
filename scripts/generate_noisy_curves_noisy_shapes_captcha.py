@@ -23,7 +23,7 @@ DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
 FONTS = os.listdir(DATA_DIR)
 IMAGE_DIR = os.path.join(DIR, 'images')
-FONT_SIZE = [56, 64, 72]
+FONT_SIZE = [64, 72]
 
 DEFAULT_FONTS = []
 for font in FONTS:
@@ -42,7 +42,7 @@ class ImageCaptcha(Captcha):
         self._width = width
         self._height = height
         self._fonts = fonts or DEFAULT_FONTS
-        self._font_sizes = font_sizes or random.choice(FONT_SIZE)
+        self._font_sizes = font_sizes or FONT_SIZE
         self._truefonts = []
 
     @property
@@ -176,13 +176,11 @@ class ImageCaptcha(Captcha):
             w, h = draw.textsize(c, font=font)
             color = random_color(10, 200, random.randint(220, 255))
 
-            # dx = random.randint(0, 4)
-            # dy = random.randint(0, 6)
-            dx = 0
-            dy = 0
+            x = 0
+            y = 0
             """RGBA 4x8-bit pixels, true color with transparency mask"""
-            im = Image.new('RGBA', (w + dx, h + dy))
-            Draw(im).text((dx, dy), c, font=font, fill=color)
+            im = Image.new('RGBA', (w, h))
+            Draw(im).text((x, y), c, font=font, fill=color)
 
             # rotate
             im = im.rotate(random.uniform(-30, 30), Image.BILINEAR, expand=1)
@@ -196,17 +194,13 @@ class ImageCaptcha(Captcha):
             im = bg
 
             # wrap
-            x = int(dx)
-            y = int(dy)
-            w2 = w + abs(x)
-            h2 = h + abs(y)
 
             data = (x, y,
-                    -x, h2 - y,
-                    w2 + x, h2 + y,
-                    w2 - x, -y)
+                    -x, h - y,
+                    w + x, h + y,
+                    w - x, -y)
 
-            im = im.resize((w2, h2))
+            im = im.resize((w, h))
             im = im.transform((w, h), Image.QUAD, data)
             """(w, h) the noisy size
                 Image.QUAD the transformation method -> data"""
@@ -244,8 +238,8 @@ class ImageCaptcha(Captcha):
         self.create_noisy_dots(im, number=400)
         self.create_noisy_circles(im, number=random.randint(10, 20))
         self.create_noisy_triangle(im, number=random.randint(5, 10))
-        self.create_noisy_straight_line(im, number=random.randint(2, 3))
-        self.create_noisy_curve(im, number=random.randint(2, 3))
+        self.create_noisy_straight_line(im, number=random.randint(1, 2))
+        self.create_noisy_curve(im, number=random.randint(1, 2))
         im = im.filter(ImageFilter.SMOOTH)
         return im
 

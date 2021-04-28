@@ -18,7 +18,7 @@ DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
 FONTS = os.listdir(DATA_DIR)
 IMAGE_DIR = os.path.join(DIR, 'images')
-FONT_SIZE = [56, 64, 72]
+FONT_SIZE = [64, 72]
 
 DEFAULT_FONTS = []
 for font in FONTS:
@@ -41,7 +41,7 @@ class ImageCaptcha(Captcha):
         self._width = width
         self._height = height
         self._fonts = fonts or DEFAULT_FONTS
-        self._font_sizes = font_sizes or random.choice(FONT_SIZE)
+        self._font_sizes = font_sizes or FONT_SIZE
         self._truefonts = []
 
     @property
@@ -96,7 +96,7 @@ class ImageCaptcha(Captcha):
             x = random.randint(0, int(8 * w / 9))
             y = random.randint(0, int(7 * h / 10))
 
-            color = random_color(10, 200, random.randint(220, 225))
+            color = random_color(120, 220, random.randint(20, 55))
 
             draw.text((x, y), char, fill=color, font=font)
             draw.text((x + 1, y + 1), char, fill=color, font=font)
@@ -115,14 +115,14 @@ class ImageCaptcha(Captcha):
             color = random_color(10, 200, random.randint(220, 225))
             bold_width = 3
 
-            dx = 0
-            dy = 0
+            x = 0
+            y = 0
 
             im = Image.new('RGBA', (w + bold_width, h + bold_width))
 
-            Draw(im).text((dx, dy), c, font=font, fill=color)
-            Draw(im).text((dx + 1, dy + 1), c, font=font, fill=color)
-            Draw(im).text((dx - 1, dy - 1), c, font=font, fill=color)
+            Draw(im).text((x, y), c, font=font, fill=color)
+            Draw(im).text((x + 1, y + 1), c, font=font, fill=color)
+            Draw(im).text((x - 1, y - 1), c, font=font, fill=color)
 
             im = im.rotate(random.uniform(-30, 30), Image.BILINEAR, expand=1)
             im = im.crop(im.getbbox())
@@ -135,17 +135,15 @@ class ImageCaptcha(Captcha):
             im = bg
 
             # wrap
-            x = int(dx)
-            y = int(dy)
-            w2 = w + abs(x)
-            h2 = h + abs(y)
+            # w2 = w + abs(x)
+            # h2 = h + abs(y)
 
             data = (x, y,
-                    -x, h2 - y,
-                    w2 + x, h2 + y,
-                    w2 - x, -y)
+                    -x, h - y,
+                    w + x, h + y,
+                    w - x, -y)
 
-            im = im.resize((w2, h2))
+            im = im.resize((w, h))
             im = im.transform((w, h), Image.QUAD, data)
             return im
 
