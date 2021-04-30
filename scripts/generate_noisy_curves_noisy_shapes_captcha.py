@@ -17,13 +17,13 @@ import django
 os.environ["DJANGO_SETTINGS_MODULE"] = 'generate_captcha.settings'
 django.setup()
 
-from captchaimages.models import ImgCaptcha
+from captcha_web_services.models import ImgCaptcha
 
 DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
 FONTS = os.listdir(DATA_DIR)
 IMAGE_DIR = os.path.join(DIR, 'images')
-FONT_SIZE = [64, 72]
+FONT_SIZE = [64, 68]
 
 DEFAULT_FONTS = []
 for font in FONTS:
@@ -57,7 +57,7 @@ class ImageCaptcha(Captcha):
         return self._truefonts
 
     @staticmethod
-    def create_noisy_dots(image, number):
+    def create_noisy_dot(image, number):
         w, h = image.size
         color = random_color(10, 200, random.randint(220, 225))
         while number:
@@ -69,7 +69,7 @@ class ImageCaptcha(Captcha):
         return image
 
     @staticmethod
-    def create_noisy_circles(image, number):
+    def create_noisy_circle(image, number):
         w, h = image.size
         while number:
             distance = random.randint(1, 10)
@@ -124,7 +124,7 @@ class ImageCaptcha(Captcha):
             draw = aggdraw.Draw(image)
             # 2 is the outlinewidth in pixels
             color = random_color(10, 200, random.randint(220, 225))
-            outline = aggdraw.Pen(color, 5)
+            outline = aggdraw.Pen(color, random.randint(1, 5))
             # the pathstring: c for bezier curves (all lowercase letters for relative path)
             pathstring = "c"
             coord_len = len(points)
@@ -155,7 +155,7 @@ class ImageCaptcha(Captcha):
             points = [x1, y1, x2, y2]
             draw = aggdraw.Draw(image)
             color = random_color(10, 200, random.randint(220, 225))
-            outline = aggdraw.Pen(color, 5)
+            outline = aggdraw.Pen(color, random.randint(1, 5))
             draw.line(points, outline)
             draw.flush()
 
@@ -194,7 +194,6 @@ class ImageCaptcha(Captcha):
             im = bg
 
             # wrap
-
             data = (x, y,
                     -x, h - y,
                     w + x, h + y,
@@ -235,8 +234,8 @@ class ImageCaptcha(Captcha):
     def generate_image(self, chars):
         background = random_color(238, 255)
         im = self.create_captcha_image(chars, background)
-        self.create_noisy_dots(im, number=400)
-        self.create_noisy_circles(im, number=random.randint(10, 20))
+        self.create_noisy_dot(im, number=400)
+        self.create_noisy_circle(im, number=random.randint(10, 20))
         self.create_noisy_triangle(im, number=random.randint(5, 10))
         self.create_noisy_straight_line(im, number=random.randint(1, 2))
         self.create_noisy_curve(im, number=random.randint(1, 2))

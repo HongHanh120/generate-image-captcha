@@ -7,7 +7,7 @@ from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
 from io import BytesIO
 from datetime import datetime
-from captchaimages.models import ImgCaptcha
+from captcha_web_services.models import ImgCaptcha
 
 import django
 os.environ["DJANGO_SETTINGS_MODULE"] = "generate_captcha.settings"
@@ -17,7 +17,7 @@ DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
 FONTS = os.listdir(DATA_DIR)
 IMAGE_DIR = os.path.join(DIR, 'images')
-FONT_SIZE = [64, 72]
+FONT_SIZE = [64, 68]
 
 DEFAULT_FONTS = []
 for font in FONTS:
@@ -59,8 +59,8 @@ class ImageCaptcha(Captcha):
         y_start = 0
         y_end = h
 
-        step_width_size = int(w / 7)
-        step_height_size = int(h / 4)
+        step_width_size = int(w / random.randint(5, 8))
+        step_height_size = int(h / random.randint(3, 5))
 
         draw = Draw(image)
 
@@ -115,9 +115,6 @@ class ImageCaptcha(Captcha):
             im = bg
 
             # wrap
-            # w2 = w + abs(x)
-            # h2 = h + abs(y)
-
             data = (x, y,
                     -x, h - y,
                     w + x, h + y,

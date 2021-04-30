@@ -12,13 +12,13 @@ import django
 os.environ["DJANGO_SETTINGS_MODULE"] = 'generate_captcha.settings'
 django.setup()
 
-from captchaimages.models import ImgCaptcha
+from captcha_web_services.models import ImgCaptcha
 
 DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
 FONTS = os.listdir(DATA_DIR)
 IMAGE_DIR = os.path.join(DIR, 'images')
-FONT_SIZE = [64, 72]
+FONT_SIZE = [64, 68]
 
 DEFAULT_FONTS = []
 for font in FONTS:
@@ -55,7 +55,7 @@ class ImageCaptcha(Captcha):
         return self._truefonts
 
     @staticmethod
-    def create_noise_chars_using_mask(image, char, number):
+    def create_noise_chars_using_mask(image, char, background, number):
         width, height = image.size
         font = truetype(random.choice(DEFAULT_FONTS), 30)
         draw = Draw(image)
@@ -79,9 +79,13 @@ class ImageCaptcha(Captcha):
             im = im.rotate(random.uniform(-45, 45), Image.BILINEAR, expand=1)
             im = im.crop(im.getbbox())
 
-            mask = im.convert('L').point(table)
+            alpha = im.convert('RGBA').split()[-1]
+            bg = Image.new("RGBA", im.size, background + (255,))
+            bg.paste(im, mask=alpha)
+            im = bg
+            # mask = im.convert('L').point(table)
 
-            image.paste(im, (x, y), mask=mask)
+            image.paste(im, (x, y))
             number -= 1
 
         return image
@@ -129,14 +133,10 @@ class ImageCaptcha(Captcha):
 
             alpha = im.convert('RGBA').split()[-1]
             bg = Image.new('RGBA', im.size, background + (255,))  # them Alpha = mau background cho ảnh bg
-            self.create_noise_chars_using_mask(bg, random.choice(chars), 1)
+            self.create_noise_chars_using_mask(bg, random.choice(chars), background, 1)
             bg.paste(im, mask=alpha)
 
             im = bg
-
-            # wrap
-            # w2 = w + abs(x)
-            # h2 = h + abs(y)
 
             data = (x, y,
                     -x, h - y,
@@ -173,7 +173,7 @@ class ImageCaptcha(Captcha):
         background = random_color(238, 255)
         im = self.create_captcha_image(chars, background)
         for c in chars:
-            self.create_noise_chars_using_mask(im, c, 1)
+            # self.create_noise_chars_using_mask(im, c, background, 1)
             self.create_noise_chars_without_mask(im, c, 1)
         im = im.filter(ImageFilter.SMOOTH)
         return im
