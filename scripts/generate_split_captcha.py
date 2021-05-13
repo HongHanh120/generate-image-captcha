@@ -176,10 +176,11 @@ converted_date = int(datetime.strptime(created_date, "%c").timestamp())
 image_name = "split_captcha_" + str(converted_date) + ".png"
 abs_image_path = os.path.join(IMAGE_DIR, os.path.join('split', image_name))
 print(abs_image_path)
-hashed_captcha = bcrypt.hashpw(captcha, bcrypt.gensalt())
+# hashed_captcha = bcrypt.hashpw(captcha, bcrypt.gensalt())
 
 img_captcha = ImgCaptcha(
-    captcha_text=hashed_captcha.decode(),
+    # captcha_text=hashed_captcha.decode(),
+    captcha_text=captcha.decode(),
     image_url=abs_image_path,
     style="split captcha",
     created_date=created_date,

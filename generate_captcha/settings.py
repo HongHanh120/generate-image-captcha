@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+import os
 import mongoengine
 from pathlib import Path
 
@@ -38,8 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'captchaimages.apps.CaptchaimagesConfig',
     'rest_framework_mongoengine',
+    'captcha_web_services.apps.CaptchaimagesConfig',
+
 ]
 
 MIDDLEWARE = [
@@ -75,16 +77,31 @@ WSGI_APPLICATION = 'generate_captcha.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.dummy',
+#         'NAME': 'captcha',
+#         'HOST': 'localhost',
+#         'PORT': '27017'
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.dummy',
-        'NAME': 'captcha',
-        'HOST': 'localhost',
-        'PORT': '27017'
-    }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    },
 }
 
-mongoengine.connect(db='captcha', host='localhost', port=27017)
+
+_MONGODB_USER = 'root'
+_MONGODB_PASSWD = 'password'
+_MONGODB_HOST = 'localhost'
+_MONGODB_NAME = 'captcha'
+_MONGODB_DATABASE_HOST = \
+    'mongodb://%s:%s@%s/%s' \
+    % (_MONGODB_USER, _MONGODB_PASSWD, _MONGODB_HOST, _MONGODB_NAME)
+
+mongoengine.connect(db=_MONGODB_NAME, host=_MONGODB_HOST, port=27017)
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
@@ -132,4 +149,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
 

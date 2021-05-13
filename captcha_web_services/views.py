@@ -1,9 +1,12 @@
 import os
 import sys
 import bcrypt
+import bson
 import requests
 import random
 import simplejson
+import dateutil.parser
+from bson.errors import InvalidId
 from rest_framework_mongoengine import viewsets
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -16,7 +19,6 @@ from .models import *
 from scripts.generate_mass_captcha import *
 from scripts.generate_split_captcha import *
 from scripts.generate_noisy_curves_noisy_shapes_captcha import *
-
 
 SCRIPTS = [
     '//home//hanh//Desktop//generate//generate_captcha//scripts//generate_mass_captcha.py',
@@ -76,7 +78,7 @@ def captcha_image_detail(request, pk):
 
 def generate_image_captcha(request):
     out = run([sys.executable,
-               random.choice(SCRIPTS)] + list(sys.argv),
+               random.choice(SCRIPTS)],
               shell=False,
               stdout=PIPE)
 
@@ -90,6 +92,7 @@ def generate_image_captcha(request):
     if request.method == "GET":
         serializer = CaptchaImageSerializer(captcha_image, many=True)
         image_dict = json.loads(json.dumps(serializer.data))[0]
+        print(image_dict['captcha_text'])
         # print(image_dict)
         data = {
             'remote_id': image_dict['id'],
@@ -102,20 +105,73 @@ def generate_image_captcha(request):
 
 def check_answer(request):
     if request.method == "POST":
+        requested_time = datetime.now().strftime("%c")
+        requested_timestamp = int(datetime.strptime(requested_time, "%c").timestamp())
+
         data = json.loads(request.body)
-        response = data['response']
-        # print(response)
+        answer = data.get('answer')
+        id_image = data.get('remote_image_id')
 
-        id_image = data['remote_image_id']
-        image = ImgCaptcha.objects(id=id_image)
-        serializer = CaptchaImageSerializer(image, many=True)
-        image_dict = json.loads(json.dumps(serializer.data))[0]
-        # print(image_dict['captcha_text'])
-
-        if bcrypt.checkpw(response.encode(), image_dict['captcha_text'].encode()):
-            result = 'Success'
-        else:
+        if answer is None:
             result = 'Fail'
+            error_code = 'missing_input_answer'
+            response = {
+                'result': result,
+                'error_code': error_code,
+            }
+            return JsonResponse({'response': response})
+        elif id_image is None:
+            result = 'Fail'
+            error_code = 'missing_input_remote_image_id'
+            response = {
+                'result': result,
+                'error_code': error_code,
+            }
+            return JsonResponse({'response': response})
+        else:
+            try:
+                image = ImgCaptcha.objects(id=bson.objectid.ObjectId(id_image))
+            except (TypeError, InvalidId):
+                image = None
+            if image is None:
+                result = 'Fail'
+                error_code = 'invalid_input_remote_image_id'
+                response = {
+                    'result': result,
+                    'error_code': error_code,
+                }
+                return JsonResponse({'response': response})
 
-        print(result)
-        return JsonResponse({'result': result})
+            serializer = CaptchaImageSerializer(image, many=True)
+            image_dict = json.loads(json.dumps(serializer.data))[0]
+
+            created_time = dateutil.parser.parse(image_dict['created_date'])
+            created_timestamp = int(datetime.strptime(created_time.strftime("%c"), "%c").timestamp())
+
+            if created_timestamp + 60 >= requested_timestamp:
+                if answer == image_dict['captcha_text']:
+                    result = 'Success'
+                    response = {
+                        'result': result,
+                    }
+                else:
+                    result = 'Fail'
+                    error_code = 'invalid_input_answer'
+                    response = {
+                        'result': result,
+                        'error_code': error_code,
+                    }
+            else:
+                result = 'Fail'
+                error_code = 'timeout'
+                response = {
+                    'result': result,
+                    'error_code': error_code,
+                }
+            return JsonResponse({'response': response})
+    else:
+        response = {
+            'result': None,
+            'error_code': None,
+        }
+        return JsonResponse({'response': response})

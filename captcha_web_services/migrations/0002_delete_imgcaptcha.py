@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('captcha_images', '0001_initial'),
+        ('captcha_web_services', '0001_initial'),
     ]
 
     operations = [

@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from . import views
 
 router = routers.DefaultRouter()
-router.register(r'captcha_images', views.ImgCaptchaViewSet, 'captcha_image')
+router.register(r'captcha_web_services', views.ImgCaptchaViewSet, 'captcha_image')
 
 urlpatterns = [
     path('', include(router.urls)),

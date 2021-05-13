@@ -9,6 +9,7 @@ from io import BytesIO
 from datetime import datetime
 
 import django
+
 os.environ["DJANGO_SETTINGS_MODULE"] = 'generate_captcha.settings'
 django.setup()
 
@@ -193,22 +194,24 @@ def random_string():
     return ''.join(random_letter)
 
 
-captcha = random_string().encode()
-
+# captcha = random_string().encode()
+captcha = random_string()
 img = ImageCaptcha(fonts=[random.choice(DEFAULT_FONTS)])
 
 created_date = datetime.now().strftime("%c")
-converted_date = int(datetime.strptime(created_date, "%c").timestamp())
-image_name = "mass_captcha_" + str(converted_date) + ".png"
+timestamp = int(datetime.strptime(created_date, "%c").timestamp())
+image_name = "mass_captcha_" + str(timestamp) + ".png"
 abs_image_path = os.path.join(IMAGE_DIR, os.path.join('mass', image_name))
 print(abs_image_path)
-hashed_captcha = bcrypt.hashpw(captcha, bcrypt.gensalt())
+# hashed_captcha = bcrypt.hashpw(captcha, bcrypt.gensalt())
 
 img_captcha = ImgCaptcha(
-    captcha_text=hashed_captcha.decode(),
+    # captcha_text=hashed_captcha.decode(),
+    captcha_text=captcha,
     image_url=abs_image_path,
     style="mass captcha",
     created_date=created_date,
-    ).save()
+).save()
 
-img.write(captcha.decode(), abs_image_path)
+# img.write(captcha.decode(), abs_image_path)
+img.write(captcha, abs_image_path)

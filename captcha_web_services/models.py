@@ -3,6 +3,7 @@ from mongoengine import *
 from datetime import datetime
 
 
+
 # Create your models here.
 class ImgCaptcha(Document):
     captcha_text = StringField(max_length=255, unique=True, required=True)
