@@ -92,8 +92,7 @@ def generate_image_captcha(request):
     if request.method == "GET":
         serializer = CaptchaImageSerializer(captcha_image, many=True)
         image_dict = json.loads(json.dumps(serializer.data))[0]
-        print(image_dict['captcha_text'])
-        # print(image_dict)
+
         data = {
             'remote_id': image_dict['id'],
             'remote_url': image_dict['image_url'],
@@ -103,7 +102,7 @@ def generate_image_captcha(request):
         return JsonResponse({'data': {}}, safe=False)
 
 
-def check_answer(request):
+def validate_captcha(request):
     if request.method == "POST":
         requested_time = datetime.now().strftime("%c")
         requested_timestamp = int(datetime.strptime(requested_time, "%c").timestamp())
@@ -113,7 +112,7 @@ def check_answer(request):
         id_image = data.get('remote_image_id')
 
         if answer is None:
-            result = 'Fail'
+            result = 'fail'
             error_code = 'missing_input_answer'
             response = {
                 'result': result,
@@ -121,7 +120,7 @@ def check_answer(request):
             }
             return JsonResponse({'response': response})
         elif id_image is None:
-            result = 'Fail'
+            result = 'fail'
             error_code = 'missing_input_remote_image_id'
             response = {
                 'result': result,
@@ -133,9 +132,19 @@ def check_answer(request):
                 image = ImgCaptcha.objects(id=bson.objectid.ObjectId(id_image))
             except (TypeError, InvalidId):
                 image = None
+
             if image is None:
-                result = 'Fail'
+                result = 'fail'
                 error_code = 'invalid_input_remote_image_id'
+                response = {
+                    'result': result,
+                    'error_code': error_code,
+                }
+                return JsonResponse({'response': response})
+
+            if answer is None:
+                result = 'fail'
+                error_code = 'invalid_input_answer'
                 response = {
                     'result': result,
                     'error_code': error_code,
@@ -148,30 +157,28 @@ def check_answer(request):
             created_time = dateutil.parser.parse(image_dict['created_date'])
             created_timestamp = int(datetime.strptime(created_time.strftime("%c"), "%c").timestamp())
 
-            if created_timestamp + 60 >= requested_timestamp:
-                if answer == image_dict['captcha_text']:
-                    result = 'Success'
+            if created_timestamp + 120 >= requested_timestamp and image_dict['validated'] is False:
+                if bcrypt.checkpw(answer.encode(), image_dict['captcha_text'].encode()):
+                    result = 'success'
                     response = {
                         'result': result,
                     }
                 else:
-                    result = 'Fail'
-                    error_code = 'invalid_input_answer'
+                    result = 'fail'
+                    error_code = 'incorrect_input_answer'
                     response = {
                         'result': result,
                         'error_code': error_code,
                     }
+                image.update(validated=True)
             else:
-                result = 'Fail'
-                error_code = 'timeout'
+                result = 'fail'
+                error_code = 'timeout_or_duplicate'
                 response = {
                     'result': result,
                     'error_code': error_code,
                 }
+            print(response)
             return JsonResponse({'response': response})
     else:
-        response = {
-            'result': None,
-            'error_code': None,
-        }
-        return JsonResponse({'response': response})
+        return JsonResponse({'response': {}})

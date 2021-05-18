@@ -3,22 +3,22 @@ from mongoengine import *
 from datetime import datetime
 
 
-
 # Create your models here.
 class ImgCaptcha(Document):
     captcha_text = StringField(max_length=255, unique=True, required=True)
     image_url = StringField(unique=True, required=True)
     style = StringField(max_length=255, required=True)
     created_date = DateTimeField(requied=True)
+    validated = BooleanField(default=False)
 
-    def json(self):
-        captcha_dict = {
-            "captcha_text": self.captcha_text,
-            "image_url": self.image_url,
-            "style": self.style,
-            "created_date": self.created_date,
-        }
-        return json.dumps(captcha_dict)
+    # def json(self):
+    #     captcha_dict = {
+    #         "captcha_text": self.captcha_text,
+    #         "image_url": self.image_url,
+    #         "style": self.style,
+    #         "created_date": self.created_date,
+    #     }
+    #     return json.dumps(captcha_dict)
 
     meta = {
         "indexes": ["captcha_text"],

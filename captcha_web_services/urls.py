@@ -12,5 +12,5 @@ urlpatterns = [
     path('captcha/', views.captcha_image_list),
     path('captcha/<str:pk>/', views.captcha_image_detail),
     path('api/generate-image/', views.generate_image_captcha),
-    path('api/check-answer/', csrf_exempt(views.check_answer))
+    path('api/validate-captcha/', csrf_exempt(views.validate_captcha))
 ]
