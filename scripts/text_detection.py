@@ -2,22 +2,31 @@ import os
 import json
 import cv2
 import pytesseract
+import bcrypt
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse
 from pytesseract import Output
 
-DIR = '/home/hanh/Desktop/generate/generate_captcha/scripts'
-IMAGES = os.listdir(os.path.join(DIR, 'images'))
+from captcha_web_services.models import *
+from captcha_web_services.serializers import *
+
+import django
+os.environ["DJANGO_SETTINGS_MODULE"] = "generate_captcha.settings"
+django.setup()
+
+DIR = '/home/hanh/Desktop/generate/generate_captcha/images'
+IMAGES = os.listdir(os.path.join(DIR, 'mass'))
 MASS_IMAGES = []
 
 for im in IMAGES:
-    img_path = os.path.join(os.path.join(DIR, 'images'), im)
+    img_path = os.path.join(os.path.join(DIR, 'mass'), im)
     MASS_IMAGES.append(img_path)
-
 
 # print(MASS_IMAGES)
 test_images = []
 
 
-def write_json(data, filename='data.json'):
+def write_json(data, filename='mass.json'):
     with open(filename, "a") as f:
         f.write('[' + '\n')
         for d in data:
@@ -68,6 +77,9 @@ for im in MASS_IMAGES:
     parse_text = []
     word_list = []
     last_word = ''
+    string = ''
+    total_text_detection = []
+    checked_result = False
 
     for word in details['text']:
         if word != '':
@@ -78,11 +90,34 @@ for im in MASS_IMAGES:
             parse_text.append(word_list)
             word_list = []
 
+    for list_text in parse_text:
+        total_text_detection += list_text
+
+    for text in total_text_detection:
+        string += text
+    # print(string)
+
+    captcha_image = ''
+    try:
+        captcha_image = ImgCaptcha.objects(image_url=im)
+    except ObjectDoesNotExist:
+        print(HttpResponse(status=404))
+
+    serializer = CaptchaImageSerializer(captcha_image, many=True)
+    image_dict = json.loads(json.dumps(serializer.data))[0]
+
+    if len(string) == 6:
+        if bcrypt.checkpw(bytes(string, 'utf-8'), image_dict['captcha_text'].encode()):
+            checked_result = True
+
     new_data = {
         "images": im,
-        "text_detection": parse_text[0],
+        "text_detection": parse_text,
+        "check_with_captcha_text": checked_result
     }
-    # new_data = '\n'.join(new_data)
+    if checked_result is True:
+        print(new_data)
+    # print(new_data)
     test_images.append(new_data)
 
 write_json(test_images)
