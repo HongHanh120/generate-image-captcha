@@ -26,7 +26,7 @@ for im in IMAGES:
 test_images = []
 
 
-def write_json(data, filename='mass.json'):
+def write_json(data, filename='../data/text_detection_results/mass.json'):
     with open(filename, "a") as f:
         f.write('[' + '\n')
         for d in data:

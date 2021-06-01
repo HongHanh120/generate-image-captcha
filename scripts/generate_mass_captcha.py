@@ -17,14 +17,15 @@ from captcha_web_services.models import ImgCaptcha
 
 DIR = '/home/hanh/Desktop/generate/generate_captcha/'
 DATA_DIR = os.path.join(DIR, 'data')
-FONTS = os.listdir(DATA_DIR)
+FONTS = os.listdir(os.path.join(DATA_DIR, 'fonts'))
 IMAGE_DIR = os.path.join(DIR, 'images')
 FONT_SIZE = [64, 68]
 
 DEFAULT_FONTS = []
 for font in FONTS:
-    DEFAULT_FONTS.append(os.path.join(DATA_DIR, font))
+    DEFAULT_FONTS.append(os.path.join(os.path.join(DATA_DIR, 'fonts'), font))
 
+# print(DEFAULT_FONTS)
 # Using for mask
 table = []
 for i in range(256):
